@@ -1,0 +1,59 @@
+clear all
+close all
+
+load('fMRI.mat');
+
+
+%  for i = 1:160
+%      imagesc(fMRI.vol(:,:,1,i)); 
+%     pause;
+%  end
+
+a = 0.1;
+fMRIfilt = zeros(size(fMRI.vol));
+%
+[X,Y,Z]=meshgrid(-63.5:63.5,-63.5:63.5,-18:18);
+X =X./max(X(:));
+Y = Y./max(Y(:));
+Z = Z./max(Z(:));
+
+filter = exp(-(X.^2*a^2+Y.^2*a^2+Z.^2*a^2)/(2*a^3));
+%
+ for i = 1:160 
+%     tic
+  kspace = fftshift(fftn(ifftshift(fMRI.vol(:,:,:,i)))); 
+ 
+    kspacefilt = kspace.*filter;
+  
+  imageFilt = fftshift(ifftn(ifftshift(kspacefilt)));
+  fMRIfilt(:,:,:,i)= imageFilt;
+  imagesc(abs(imageFilt(:,:,i)));
+ 
+   % imagesc(fMRI.vol(:,:,:,i)); 
+%  
+%  
+%  
+% 
+  pause
+ end 
+
+  
+  
+  %%
+  
+  test = zeros(size(fMRI.vol(:,:,:,1)));
+  
+  test(64,64,18) = 1;
+  
+  kspace = fftshift(fftn(ifftshift(test))); 
+
+    kspacefilt = kspace.*filter;
+    
+      imageFilt = fftshift(ifftn(ifftshift(kspacefilt)));
+     imagesc(abs(imageFilt(:,:,18)));
+
+      plot(abs(imageFilt(:,64,1)))
+
+  
+  
+  
