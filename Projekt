@@ -2,10 +2,11 @@ clear all
 close all
 
 load('fMRI.mat');
+load ('hrf_1ms.mat');
 
 
 %  for i = 1:160
-%      imagesc(fMRI.vol(:,:,1,i)); 
+%      imagesc(fMRI.vol(:,:,1,i));
 %     pause;
 %  end
 
@@ -19,41 +20,90 @@ Z = Z./max(Z(:));
 
 filter = exp(-(X.^2*a^2+Y.^2*a^2+Z.^2*a^2)/(2*a^3));
 %
- for i = 1:160 
-%     tic
-  kspace = fftshift(fftn(ifftshift(fMRI.vol(:,:,:,i)))); 
- 
-    kspacefilt = kspace.*filter;
-  
-  imageFilt = fftshift(ifftn(ifftshift(kspacefilt)));
-  fMRIfilt(:,:,:,i)= imageFilt;
-  imagesc(abs(imageFilt(:,:,i)));
- 
-   % imagesc(fMRI.vol(:,:,:,i)); 
-%  
-%  
-%  
-% 
-  pause
- end 
-
-  
-  
-  %%
-  
-  test = zeros(size(fMRI.vol(:,:,:,1)));
-  
-  test(64,64,18) = 1;
-  
-  kspace = fftshift(fftn(ifftshift(test))); 
-
+for i = 1:160
+    %     tic
+    kspace = fftshift(fftn(ifftshift(fMRI.vol(:,:,:,i))));
+    
     kspacefilt = kspace.*filter;
     
-      imageFilt = fftshift(ifftn(ifftshift(kspacefilt)));
-     imagesc(abs(imageFilt(:,:,18)));
+    imageFilt = fftshift(ifftn(ifftshift(kspacefilt)));
+    fMRIfilt(:,:,:,i)= imageFilt;
+    
+    %imagesc(abs(imageFilt(:,:,i)));
+    
+    % imagesc(fMRI.vol(:,:,:,i));
+    %
+    %
+    %
+    %
+    %pause
+end
+%% create the pulse
+timestamps = [0	32.4	64.8	97.2	129.7	162.1	194.5	226.9	259.3	291.7]
+pulse = zeros(1,320*1000);
 
-      plot(abs(imageFilt(:,64,1)))
+for i = 1:length(pulse)
+    if sum((i-timestamps*1000)>=0 & (i-timestamps*1000)<=16000) > 0
+        pulse(i)=1;
+    end
+end
+%%
 
-  
-  
-  
+convolution = conv(pulse,hrfScaled);
+figure;
+plot(convolution);
+
+for i = 1:160
+    Expectedsignal(i)=convolution(i*2000);
+    
+end
+
+[a,b,c,d]=size(fMRI.vol);
+fMRI2D = reshape(abs(fMRI.vol),a*b*c,160);
+Correalation = corr(fMRI2D',Expectedsignal');
+
+Correalation(isnan(Correalation))=0;
+
+fMRIrebuild=reshape(Correalation,a,b,c);
+
+
+kspace2=fftshift(fftn(ifftshift(fMRIrebuild)));
+
+kspace2padded = padarray(kspace2,[64,64,18]);
+
+reconstructedkspace2 = abs(fftshift(ifftn(ifftshift(kspace2padded))));
+
+
+
+%imagesc(abs(fMRIrebuild(:,:,15));
+
+%%
+% figure;
+% plot(abs(fMRIrebuildFFT));
+
+%   test = zeros(size(fMRI.vol(:,:,:,1)));
+%
+%   test(64,64,18) = 1;
+%
+%   kspace = fftshift(fftn(ifftshift(test)));
+%
+%     kspacefilt = kspace.*filter;
+%
+%       imageFilt = fftshift(ifftn(ifftshift(kspacefilt)));
+%      imagesc(abs(imageFilt(:,:,18)));
+%
+%       plot(abs(imageFilt(:,64,1)))
+
+%%
+for slice = 1:37
+     subplot(1,2,1)
+     imagesc(abs(fMRIfilt(:,:,slice,1)));
+    
+    subplot(1,2,2)
+    imagesc(reconstructedkspace2(:,:,slice*2)); %% GÅNGRA MED 8
+    title(slice)
+    pause
+end
+
+
+
