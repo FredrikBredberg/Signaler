@@ -100,10 +100,8 @@ for slice = 1:37
      imagesc(abs(fMRIfilt(:,:,slice,1)));
     
     subplot(1,2,2)
-    imagesc(reconstructedkspace2(:,:,slice*2)); %% GÅNGRA MED 8
+    imagesc(8.*reconstructedkspace2(:,:,slice*2)); %% GÅNGRA MED 8
     title(slice)
     pause
+
 end
-
-
-
